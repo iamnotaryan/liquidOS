@@ -17,6 +17,7 @@ void kernel_main(void) {
 
 	vga_clear();
 	vga_print("VGA OK\n");
+	vga_print("liquid> ");
 
 	serial_write("[KERNEL] VGA ready\n");
 	serial_write("[KERNEL] entering idle\n");

@@ -23,6 +23,21 @@ static inline unsigned char inb(unsigned short port) {
 }
 
 static int tick = 0;
+int strcmp(const char *a, const char *b) {
+    while (*a && *b) {
+        if (*a != *b) return *a - *b;
+        a++; b++;
+    }
+    return *a - *b;
+}
+
+int strncmp(const char *a, const char *b, int n) {
+    for (int i = 0; i < n; i++) {
+        if (a[i] != b[i]) return a[i] - b[i];
+        if (a[i] == '\0') return 0;
+    }
+    return 0;
+}
 
 void irq0_handler(void) {
 	tick++;
@@ -43,15 +58,33 @@ void irq1_handler(void) {
 		return;
 	}
 	if (c == '\b') {
-		vga_putc('\b');
+    	if (input_pos > 0) {
+        	input_pos--;
+        	vga_putc('\b');
+    }
 	}
 	else if (c == '\n') {
-		vga_putc('\n');
-	input_buffer[input_pos] = '\0';
-	vga_print("You typed: ");
-	vga_print(input_buffer);
-	vga_putc('\n');
-	input_pos = 0;
+    vga_putc('\n');
+
+    input_buffer[input_pos] = '\0';
+
+    // ---- COMMAND HANDLING ----
+
+    if (strncmp(input_buffer, "echo ", 5) == 0) {
+        vga_print(input_buffer + 5);
+        vga_putc('\n');
+    }
+    else if (strcmp(input_buffer, "help") == 0) {
+        vga_print("Commands: help, echo\n");
+    }
+    else if (strcmp(input_buffer, "clear") == 0) {
+    vga_clear();
+	}
+
+    input_pos = 0;
+
+    // print prompt again
+    vga_print("liquid> ");
 	}
 
 	else {
