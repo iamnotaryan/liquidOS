@@ -41,8 +41,8 @@ int strncmp(const char *a, const char *b, int n) {
 
 void irq0_handler(void) {
 	tick++;
-	if (tick % 100 ==0) {
-		serial_write(".");
+	if (tick % 100 ==0 && input_pos == 0) {
+		vga_print(".");
 	}
 	pic_send_eoi(0);
 }
@@ -75,10 +75,33 @@ void irq1_handler(void) {
         vga_putc('\n');
     }
     else if (strcmp(input_buffer, "help") == 0) {
-        vga_print("Commands: help, echo\n");
+        vga_print("Commands:\n");
+		vga_print("  help\n");
+		vga_print("  echo\n");
+		vga_print("  clear\n");
+		vga_print("  uptime\n");
     }
     else if (strcmp(input_buffer, "clear") == 0) {
     vga_clear();
+	}
+	else if (strcmp(input_buffer, "uptime")==0){
+		vga_print("Ticks:");
+		int t = tick;
+		char buf[16];
+		int i = 0;
+
+		if (t==0) {
+			vga_putc('0');
+		} else {
+			while (t > 0 ) {
+				buf[i++] = '0' + (t % 10);
+				t /= 10;
+			}
+			while (i--) {
+				vga_putc(buf[i]);
+			}
+		}
+		vga_putc('\n');
 	}
 
     input_pos = 0;
