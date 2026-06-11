@@ -1,5 +1,5 @@
-CC = i686-elf-gcc
-LD = i686-elf-ld
+CC = gcc
+LD = ld
 AS = nasm
 
 CFLAGS = -ffreestanding -m32 -O2 -Wall -Wextra -fno-builtin -nostdlib
