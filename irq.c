@@ -15,7 +15,23 @@ static const char scancode_map[128] = {
 	0,	'*',
 	0,	' ',
 };
-
+static const char shift_map[128] = {
+    0,27,
+    '!','@','#','$','%','^','&','*','(',')',
+    '_','+','\b',
+    '\t',
+    'Q','W','E','R','T','Y','U','I','O','P',
+    '{','}','\n',
+    0,
+    'A','S','D','F','G','H','J','K','L',
+    ':','"','~',
+    0,
+    '|',
+    'Z','X','C','V','B','N','M',
+    '<','>','?',
+    0,'*',
+    0,' ',
+};
 static inline unsigned char inb(unsigned short port) {
 	unsigned char ret;
 	__asm__ volatile ("inb %1, %0" : "=a"(ret) : "Nd"(port));
@@ -23,6 +39,8 @@ static inline unsigned char inb(unsigned short port) {
 }
 
 static int tick = 0;
+static int shift_pressed = 0;
+static int caps_lock = 0;
 int strcmp(const char *a, const char *b) {
     while (*a && *b) {
         if (*a != *b) return *a - *b;
@@ -48,11 +66,46 @@ void irq0_handler(void) {
 }
 void irq1_handler(void) {
 	unsigned char scancode = inb(0x60);
+	if (scancode == 42) {
+		shift_pressed = 1;
+		pic_send_eoi(1);
+		return;
+	}
+	if (scancode == 170) {
+		shift_pressed = 0;
+		pic_send_eoi(1);
+		return;
+	}
+	if (scancode == 54) {
+		shift_pressed = 1;
+		pic_send_eoi(1);
+		return;
+	}
+	if (scancode == 182) {
+		shift_pressed = 0;
+		pic_send_eoi(1);
+		return;
+	}
+	if (scancode == 58) {
+		caps_lock = !caps_lock;
+		pic_send_eoi(1);
+		return;
+	}
+
 	if (scancode & 0x80) {
 		pic_send_eoi(1);
 		return;
 	}
-	char c = scancode_map[scancode];
+	char c;
+	if (shift_pressed)
+		c = shift_map[scancode];
+	else
+		c = scancode_map[scancode];
+	
+	if (caps_lock && !shift_pressed) {
+		if ( c >= 'a' && c <= 'z')
+			c -= 32;
+	}
 	if (!c) {
 		pic_send_eoi(1);
 		return;
